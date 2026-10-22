@@ -333,8 +333,14 @@ bool IHyprRenderer::shouldRenderMonitor(PHLMONITOR monitor) {
 }
 
 bool IHyprRenderer::shouldRenderWindowInScene(PHLWINDOW window, PHLMONITOR monitor, PHLWORKSPACE workspace, eSceneMode mode) {
-    if (mode == eSceneMode::MONITOR)
+    if (mode == eSceneMode::MONITOR) {
+        // Special workspaces are visited on every monitor for spanning windows.
+        // Do not redraw another special workspace's tiles over its floating windows.
+        if (workspace && workspace->type() == Workspace::eWorkspaceType::SPECIAL && window->onSpecialWorkspace() && window->m_workspace != workspace)
+            return false;
+
         return sceneSelectsWindow(mode, {.monitorVisible = shouldRenderWindow(window, monitor)});
+    }
 
     return sceneSelectsWindow(mode,
                               {
