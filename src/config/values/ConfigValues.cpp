@@ -1,4 +1,5 @@
 #include "ConfigValues.hpp"
+#include "config/shared/Types.hpp"
 
 using namespace Config;
 using namespace Config::Values;
@@ -260,6 +261,7 @@ std::vector<SP<IValue>> Values::getConfigValues() {
         MS<Bool>("decoration:blur:ignore_opacity", "make the blur layer ignore the opacity of the window", true, {.refresh = Supplementary::REFRESH_BLUR_FB}),
         MS<Bool>("decoration:blur:new_optimizations", "whether to enable further optimizations to the blur.", true, {.refresh = Supplementary::REFRESH_BLUR_FB}),
         MS<Bool>("decoration:blur:xray", "if enabled, floating windows will ignore tiled windows in their blur.", false, {.refresh = Supplementary::REFRESH_BLUR_FB}),
+        MS<Bool>("decoration:blur:proportional", "if enabled, blur strength will be proportional to pixel opacity", false),
         MS<Float>("decoration:blur:noise", "how much noise to apply.", 0.0117, {.min = 0, .max = 1, .refresh = Supplementary::REFRESH_BLUR_FB}),
         MS<Float>("decoration:blur:contrast", "contrast modulation for blur.", 0.8916, {.min = 0, .max = 2, .refresh = Supplementary::REFRESH_BLUR_FB}),
         MS<Float>("decoration:blur:brightness", "brightness modulation for blur.", 1, {.min = 0, .max = 2, .refresh = Supplementary::REFRESH_BLUR_FB}),
@@ -571,8 +573,8 @@ std::vector<SP<IValue>> Values::getConfigValues() {
         MS<Bool>("misc:key_press_enables_dpms", "If DPMS is set to off, wake up the monitors if a key is pressed.", false),
         MS<Bool>("misc:name_vk_after_proc", "Name virtual keyboards after the processes that create them.", true),
         MS<Bool>("misc:always_follow_on_dnd", "Will make mouse focus follow the mouse when drag and dropping.", true),
-        MS<Bool>("misc:layers_hog_keyboard_focus", "If true, will make keyboard-interactive layers keep their focus on mouse move.", true),
-        MS<Bool>("misc:allow_new_top_layers_over_existing_fullscreen", "If true, allows new top layers to go over a fullscreen window.", true),
+        MS<Bool>("misc:layers_hog_keyboard_focus", "If true, will make keyboard-interactive layers keep their focus on mouse move.", true,
+                 {.deprecationNotice = "Moved to layers category. Use layers:layers_hog_keyboard_focus instead."}),
         MS<Bool>("misc:animate_manual_resizes", "If true, will animate manual window resizes/moves", false),
         MS<Bool>("misc:animate_mouse_windowdragging", "If true, will animate windows being dragged by mouse.", false),
         MS<Bool>("misc:disable_autoreload", "If true, the config will not reload automatically on save.", false, {.refresh = Supplementary::REFRESH_CONFIG_WATCHER}),
@@ -609,6 +611,15 @@ std::vector<SP<IValue>> Values::getConfigValues() {
         MS<Int>("misc:float_force_onscreen", "whether existing floating windows must remain fully/partially on-screen", 0),
 
         /*
+         * layer:
+         */
+        MS<Bool>("layers:allow_new_top_layers_over_existing_fullscreen",
+                 "If false, newly mapped layers are not allowed to render over existing covering fullscreen window. Note that fullscreen hides all pre-existing top layers "
+                 "regardless of this setting",
+                 true),
+        MS<Bool>("layers:layers_hog_keyboard_focus", "If true, will make keyboard-interactive layers keep their focus on mouse move.", true),
+
+        /*
          * binds:
          */
 
@@ -628,6 +639,7 @@ std::vector<SP<IValue>> Values::getConfigValues() {
         MS<Bool>("binds:window_direction_monitor_fallback", "If enabled, moving a window or focus over the edge of a monitor with a direction will move it to the next monitor.",
                  true),
         MS<Bool>("binds:allow_pin_fullscreen", "Allows fullscreen to pinned windows, and restore their pinned status afterwards", false),
+        MS<Bool>("binds:client_requested_fs_uses_layout_handler", "If false, client requested FS will use default FS handler", true),
         MS<Int>("binds:drag_threshold", "Movement threshold in pixels for window dragging and c/g bind flags. 0 to disable.", 0,
                 {.min = 0, .max = std::numeric_limits<int>::max()}),
         MS<Bool>("binds:drag_center_window", "If enabled, dragging a tiled or fullscreen window will center it on the cursor when it becomes floating.", true),
@@ -807,7 +819,10 @@ std::vector<SP<IValue>> Values::getConfigValues() {
         MS<Float>("scrolling:column_width", "the default width of a column.", 0.5, {.min = 0.1, .max = 1.0}),
         MS<Int>("scrolling:focus_fit_method", "When a column is focused, what method should be used to bring it into view", 1,
                 {.min = 0, .max = 1, .map = OptionMap{{"center", 0}, {"fit", 1}}}),
-        MS<Bool>("scrolling:follow_focus", "when a window is focused, should the layout move to bring it into view automatically", true),
+        MS<Int>("scrolling:follow_focus",
+                "Behaviour of the scrolling tape when a window is in focus. 0: Focus doesn't cause tape move. 1: Focus may cause tape move, mouse click always moves the tape. 2: "
+                "Focus may cause tape move.",
+                1),
         MS<Float>("scrolling:follow_min_visible", "when a window is focused, require that at least a given fraction of it is visible for focus to follow", 0.4,
                   {.min = 0.0, .max = 1.0}),
         MS<String>("scrolling:explicit_column_widths", "A comma-separated list of preconfigured widths for colresize +conf/-conf", "0.333, 0.5, 0.667, 1.0"),

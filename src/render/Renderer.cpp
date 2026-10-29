@@ -2697,12 +2697,14 @@ void IHyprRenderer::handleFullscreenSettings(PHLMONITOR pMonitor) {
                     };
                     conversion = conversion * Hyprgraphics::CMatrix3(values);
                 }
-                const auto                 mat = conversion.mat();
+                const auto mat = conversion.mat();
+                // clang-format off
                 const std::array<float, 9> CTM = {
                     mat[0][0], mat[0][1], mat[0][2], //
                     mat[1][0], mat[1][1], mat[1][2], //
                     mat[2][0], mat[2][1], mat[2][2], //
                 };
+                // clang-format on
                 pMonitor->m_output->state->setCTM(CTM);
             } else if (!INTEROP && pMonitor->m_ctm != Mat3x3::identity()) {
                 LOG(Log::INFO, "[CM] Setting identity CTM");
@@ -2724,6 +2726,12 @@ void IHyprRenderer::handleFullscreenSettings(PHLMONITOR pMonitor) {
     if (pMonitor->m_ctmUpdated && !pMonitor->m_noShaderCTM) {
         pMonitor->m_ctmUpdated = false;
         pMonitor->m_output->state->setCTM(pMonitor->m_ctm);
+    }
+
+    // the fullscreen surface's preferred description depends on the fullscreen window, see getPreferredImageDescription()
+    if (*PAUTOHDR && PROTO::colorManagement && pMonitor->supportsHDR() && FULLSCREEN_WINDOW != pMonitor->m_autoHDRWindow) {
+        pMonitor->m_autoHDRWindow = FULLSCREEN_WINDOW;
+        PROTO::colorManagement->recheckFeedbacks();
     }
 
     pMonitor->m_previousFSWindow = FULLSCREEN_WINDOW;
